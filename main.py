@@ -7,7 +7,7 @@ def get_prices(ticker,startdate,enddate):
     prices_df = web.get_data_yahoo(ticker,
                                start = startdate,
                                end = enddate)
-    prices_df = prices_df.drop(columns=['High', 'Low','Open','Close','Volume'])
+    prices_df = prices_df.drop(columns=['Close','Volume'])
     return prices_df
 
 def bollinger_bands(prices,ticker):
