@@ -18,7 +18,7 @@ def get_prices(ticker,startdate,enddate):
     prices_df = prices_df.drop(columns=['Close'])
     return prices_df
 
-def bollinger_bands(prices,ticker):
+def bollinger_bands(prices):
 
     # To calculate SMA
     for i in range(0,prices.shape[0]-19):
@@ -51,7 +51,7 @@ def bollinger_bands(prices,ticker):
     ax.plot(x_axis, prices['20 Day MA'], color='black', lw=2)
 
     # Set Title & Show the Image
-    ax.set_title('20 Day Bollinger Band For ' + ticker)
+    ax.set_title('20 Day Bollinger Band')
     ax.set_xlabel('Date')
     ax.set_ylabel('Price(USD)')
     ax.legend(prices[['Adj Close', '20 Day MA']])
