@@ -2,8 +2,16 @@ import pandas as pd
 import pandas_datareader as web
 import matplotlib.pyplot as plt
 import datetime
+from fuzzywuzzy import process
+import requests
+
+def getTicker(text):
+    stockData = requests.get('https://api.iextrading.com/1.0/ref-data/symbols')
+    stockList = stockData.json()
+    return process.extractOne(text, stockList)[0]
 
 def get_prices(ticker,startdate,enddate):
+
     prices_df = web.get_data_yahoo(ticker,
                                start = startdate,
                                end = enddate)
@@ -11,27 +19,34 @@ def get_prices(ticker,startdate,enddate):
     return prices_df
 
 def bollinger_bands(prices,ticker):
-    prices['20 Day MA'] = prices['Adj Close'].rolling(window=20).mean()
+
+    # To calculate SMA
+    for i in range(0,prices.shape[0]-19):
+        prices.loc[prices.index[i+19],'20 Day MA'] = ((prices.iloc[i,0]+ prices.iloc[i+1,0] + prices.iloc[i+2,0] + prices.iloc[i+3,0]
+                                                    + prices.iloc[i+4,0] + prices.iloc[i+5,0] + prices.iloc[i+6,0] + prices.iloc[i+7,0] 
+                                                    + prices.iloc[i+8,0]  + prices.iloc[i+9,0] + prices.iloc[i+10,0] + prices.iloc[i+11,0] 
+                                                    + prices.iloc[i+12,0] + prices.iloc[i+13,0] + prices.iloc[i+14,0] + prices.iloc[i+15,0] 
+                                                    + prices.iloc[i+16,0] + prices.iloc[i+17,0] + prices.iloc[i+18,0] 
+                                                    + prices.iloc[i+19,0]) / 20)
     
-    # set .std(ddof=0) for population std instead of sample
+    
+    # To calculate Standard Deviation
     prices['20 Day STD'] = prices['Adj Close'].rolling(window=20).std() 
     
+    # To calculate Upper and Lower Band
     prices['Upper Band'] = prices['20 Day MA'] + (prices['20 Day STD'] * 1.96)
     prices['Lower Band'] = prices['20 Day MA'] - (prices['20 Day STD'] * 1.96)
 
     # Simple Plot
-    # set style, empty figure and axes
     plt.style.use('fivethirtyeight')
     fig = plt.figure(figsize=(12,6))
     ax = fig.add_subplot(111)
 
-    # Get index values for the X axis for facebook DataFrame
     x_axis = prices.index.get_level_values(0)
 
-    # Plot shaded 21 Day Bollinger Band for Facebook
     ax.fill_between(x_axis, prices['Upper Band'], prices['Lower Band'], color='grey')
 
-    # Plot Adjust Closing Price and Moving Averages
+    # Plot Adjusted Closing Price and Moving Averages
     ax.plot(x_axis, prices['Adj Close'], color='blue', lw=2)
     ax.plot(x_axis, prices['20 Day MA'], color='black', lw=2)
 
@@ -117,10 +132,11 @@ def rsi(prices, ticker):
     plt.show()
 
 def main():    
-    ticker = input("Please input the stock ticker:").upper()
+    stockname = input("Please input the stock name:")
     startdate = input("Please input the start date in YYYY-MM-DD format:")
     enddate = input("Please input the end date in YYYY-MM-DD format:")
 
+    ticker = getTicker(stockname)['symbol']
     prices = get_prices(ticker,startdate,enddate)
     bollinger_bands(prices,ticker)
     macd(prices,ticker)
